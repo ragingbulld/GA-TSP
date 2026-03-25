@@ -14,10 +14,13 @@ X = [16.47, 96.10;
      20.47, 97.02;
      17.20, 96.29;
      16.30, 97.38;
-     14.05, 98.12；
-     16.53, 97.38; 21.52, 95.59; 19.41, 97.13; 20.09, 92.55];
+     14.05, 98.12;
+     16.53, 97.38;
+     21.52, 95.59;
+     19.41, 97.13;
+     20.09, 92.55];
 
-NIND = 1000;       % 种群大小
+NIND = 200;       % 种群大小
 MAXGEN = 200;     % 最大迭代次数
 Pc = 0.9;         % 交叉概率
 Pm = 0.05;        % 变异概率
@@ -45,6 +48,8 @@ disp('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
 %% 4. 优化过程
 gen = 0;
 trace = zeros(1, MAXGEN); % 用于存储每一代的最优解，确保曲线连续 [关键修改]
+conv_gen = 0;
+conv_time = 0;                 % 记录收敛时花费的时间
 
 % 预先配置优化过程图
 figure('Name', '遗传算法优化过程', 'NumberTitle', 'off');
@@ -82,6 +87,11 @@ while gen < MAXGEN
     ObjV = PathLength(D, Chrom);
     [minObjV, minInd] = min(ObjV);
     trace(gen) = minObjV; % 存入追踪数组
+
+    if gen > 1 && trace(gen) < trace(gen-1)
+        conv_gen = gen; % 更新最后一次变优的代数
+        conv_time = toc(total_tic);
+    end
     
     % H. 动态更新进化曲线 [关键修改]
     % 这种方式即便你在运行中点击窗口，曲线也不会断开
@@ -106,3 +116,4 @@ OutputPath(bestPath);
 % 画出最终优化的路径图
 DrawPath(bestPath, X);
 title(['最终优化路径图 (长度: ', num2str(minObjV), ')']);
+disp(['算法稳定收敛于第 ', num2str(conv_gen), ' 代']);
