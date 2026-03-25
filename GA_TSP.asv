@@ -1,0 +1,108 @@
+%% 清除变量和窗口
+clear;
+clc;
+close all;
+
+%% 1. 初始化坐标和参数
+% X 为各城市的坐标位置
+X = [16.47, 96.10;
+     16.47, 94.44;
+     20.09, 92.54;
+     22.39, 93.37;
+     25.23, 97.24;
+     22.00, 96.05;
+     20.47, 97.02;
+     17.20, 96.29;
+     16.30, 97.38;
+     14.05, 98.12；
+     16.53, 97.38; 21.52, 95.59; 19.41, 97.13; 20.09, 92.55];
+
+NIND = 1000;       % 种群大小
+MAXGEN = 200;     % 最大迭代次数
+Pc = 0.9;         % 交叉概率
+Pm = 0.05;        % 变异概率
+GGAP = 0.9;       % 代沟 (generation gap)
+
+D = Distance(X);  % 生成距离矩阵
+N = size(D, 1);   % 城市规模
+
+%% 2. 初始化种群
+Chrom = InitPop(NIND, N);
+
+%% 3. 画出初始随机解的图
+figure('Name', '初始随机解', 'NumberTitle', 'off');
+plot(X(:,1), X(:,2), 'o');
+title('在二维地图上画出所有坐标点');
+grid on;
+pause(0.1); % 稍微停顿确保窗口弹出
+
+DrawPath(Chrom(1, :), X);
+Rlength = PathLength(D, Chrom(1, :));
+disp(['初始种群中的一个随机值路径长度：', num2str(Rlength)]);
+OutputPath(Chrom(1, :));
+disp('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
+
+%% 4. 优化过程
+gen = 0;
+trace = zeros(1, MAXGEN); % 用于存储每一代的最优解，确保曲线连续 [关键修改]
+
+% 预先配置优化过程图
+figure('Name', '遗传算法优化过程', 'NumberTitle', 'off');
+hPlot = plot(NaN, NaN, 'b-', 'LineWidth', 1.5); % 创建绘图句柄 [关键修改]
+xlabel('代数'); ylabel('当前最优路径长度');
+title('TSP 优化过程收敛曲线');
+grid on;
+hold on;
+
+ObjV = PathLength(D, Chrom); % 计算初始路径长度
+preObjV = min(ObjV);
+
+while gen < MAXGEN
+    % A. 计算适应度
+    FitnV = Fitness(ObjV);
+    
+    % B. 选择
+    SelCh = Select(Chrom, FitnV, GGAP);
+    
+    % C. 交叉
+    SelCh = Recombin(SelCh, Pc);
+    
+    % D. 变异
+    SelCh = Mutate(SelCh, Pm);
+    
+    % E. 进化逆转 (针对 TSP 的局部搜索增强)
+    SelCh = Reverse(SelCh, D);
+    
+    % F. 重插入
+    ObjVSel = PathLength(D, SelCh);
+    Chrom = Reins(Chrom, SelCh, ObjV);
+    
+    % G. 更新代数并记录最优解
+    gen = gen + 1;
+    ObjV = PathLength(D, Chrom);
+    [minObjV, minInd] = min(ObjV);
+    trace(gen) = minObjV; % 存入追踪数组
+    
+    % H. 动态更新进化曲线 [关键修改]
+    % 这种方式即便你在运行中点击窗口，曲线也不会断开
+    set(hPlot, 'XData', 1:gen, 'YData', trace(1:gen));
+    
+    % 动态调整坐标轴范围，方便观察
+    if gen > 1
+        % Y轴范围留出 10% 的余量
+        ylim([minObjV * 0.95, max(trace(1:gen)) * 1.05]);
+        xlim([1, MAXGEN]);
+    end
+    
+    drawnow; % 强制刷新图形窗口
+end
+
+%% 5. 输出结果
+disp(['优化后的最优路径长度：', num2str(trace(end))]);
+[minObjV, minInd] = min(ObjV);
+bestPath = Chrom(minInd, :);
+OutputPath(bestPath);
+
+% 画出最终优化的路径图
+DrawPath(bestPath, X);
+title(['最终优化路径图 (长度: ', num2str(minObjV), ')']);
