@@ -49,7 +49,7 @@ while gen < MAXGEN
     SelCh = Recombin(SelCh, Pc);
     
     % D. 变异
-    SelCh = Mutate(SelCh, Pm);
+    SelCh = Mutate(SelCh, Pm, gen + 1, MAXGEN);
     
     % E. 进化逆转 (针对 TSP 的局部搜索增强)
     SelCh = Reverse(SelCh, D);
