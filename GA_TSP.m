@@ -13,6 +13,7 @@ MAXGEN = 2000;    % 最大迭代次数
 Pc = 0.9;         % 交叉概率
 Pm = 0.1;        % 变异概率
 GGAP = 0.9;       % 代沟 (generation gap)
+eliteCount = 5;   % 精英保留数量
 
 D = Distance(X, instance.edgeWeightType);  % 生成距离矩阵
 N = size(D, 1);   % 城市规模
@@ -56,7 +57,7 @@ while gen < MAXGEN
     
     % F. 重插入
     ObjVSel = PathLength(D, SelCh);
-    Chrom = Reins(Chrom, SelCh, ObjV);
+    Chrom = Reins(Chrom, SelCh, ObjV, eliteCount);
     
     % G. 更新代数并记录最优解
     gen = gen + 1;
