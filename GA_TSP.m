@@ -10,15 +10,17 @@ tsplibBest = 629;
 
 NIND = 100;       % 种群大小
 MAXGEN = 2000;    % 最大迭代次数
-Pc = 0.9;         % 交叉概率
-Pm = 0.1;        % 变异概率
+PcMax = 0.95;     % 最大交叉概率
+PcMin = 0.70;     % 最小交叉概率
+PmMin = 0.02;     % 最小变异概率
+PmMax = 0.20;     % 最大变异概率
 GGAP = 0.9;       % 代沟 (generation gap)
 
 D = Distance(X, instance.edgeWeightType);  % 生成距离矩阵
 N = size(D, 1);   % 城市规模
 
 %% 2. 初始化种群
-Chrom = InitPop(NIND, N);
+Chrom = InitPop(NIND, N, D);
 initialChrom = Chrom(1, :);
 initialLength = PathLength(D, initialChrom);
 
@@ -39,6 +41,10 @@ bestTime = 0;
 ObjV = PathLength(D, Chrom); % 计算初始路径长度
 
 while gen < MAXGEN
+    progress = gen / MAXGEN;
+    Pc = PcMax - (PcMax - PcMin) * progress;
+    Pm = PmMin + (PmMax - PmMin) * progress;
+
     % A. 计算适应度
     FitnV = Fitness(ObjV);
     
@@ -49,7 +55,7 @@ while gen < MAXGEN
     SelCh = Recombin(SelCh, Pc);
     
     % D. 变异
-    SelCh = Mutate(SelCh, Pm);
+    SelCh = Mutate(SelCh, Pm, gen + 1, MAXGEN);
     
     % E. 进化逆转 (针对 TSP 的局部搜索增强)
     SelCh = Reverse(SelCh, D);
