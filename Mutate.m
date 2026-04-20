@@ -9,7 +9,22 @@ function SelCh = Mutate(SelCh, Pm)
 [NSel, L] = size(SelCh);
 for i = 1 : NSel
     if Pm >= rand
-        R = randperm(L);
-        SelCh(i, R(1 : 2)) = SelCh(i, R(2 : -1 : 1));
+        R = randperm(L, 2);
+        fromPos = R(1);
+        toPos = R(2);
+        chrom = SelCh(i, :);
+
+        gene = chrom(fromPos);
+        chrom(fromPos) = [];
+
+        if toPos == 1
+            chrom = [gene, chrom];
+        elseif toPos > L - 1
+            chrom = [chrom, gene];
+        else
+            chrom = [chrom(1 : toPos - 1), gene, chrom(toPos : end)];
+        end
+
+        SelCh(i, :) = chrom;
     end
 end
