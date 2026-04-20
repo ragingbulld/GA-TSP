@@ -37,6 +37,10 @@ gen = 0;
 trace = zeros(1, MAXGEN);
 bestGen = 0;
 bestTime = 0;
+stagnationCount = 0;
+stagnationThreshold = 120;
+recoveryWindow = 40;
+recoveryRemaining = 0;
 
 ObjV = PathLength(D, Chrom); % 计算初始路径长度
 
@@ -55,7 +59,13 @@ while gen < MAXGEN
     SelCh = Recombin(SelCh, Pc);
     
     % D. 变异
-    SelCh = Mutate(SelCh, Pm, gen + 1, MAXGEN);
+    if recoveryRemaining > 0
+        recoveryBoost = 1.8;
+        recoveryRemaining = recoveryRemaining - 1;
+    else
+        recoveryBoost = 1;
+    end
+    SelCh = Mutate(SelCh, Pm, gen + 1, MAXGEN, recoveryBoost);
     
     % E. 进化逆转 (针对 TSP 的局部搜索增强)
     SelCh = Reverse(SelCh, D);
@@ -73,6 +83,13 @@ while gen < MAXGEN
     if gen == 1 || trace(gen) < min(trace(1:gen-1))
         bestGen = gen;
         bestTime = toc(total_tic);
+        stagnationCount = 0;
+    else
+        stagnationCount = stagnationCount + 1;
+        if stagnationCount >= stagnationThreshold && recoveryRemaining == 0
+            recoveryRemaining = recoveryWindow;
+            stagnationCount = 0;
+        end
     end
     
     set(hPlot, 'XData', 1:gen, 'YData', trace(1:gen));
