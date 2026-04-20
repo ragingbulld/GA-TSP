@@ -18,7 +18,7 @@ D = Distance(X, instance.edgeWeightType);  % 生成距离矩阵
 N = size(D, 1);   % 城市规模
 
 %% 2. 初始化种群
-Chrom = InitPop(NIND, N);
+Chrom = InitPop(NIND, N, D);
 initialChrom = Chrom(1, :);
 initialLength = PathLength(D, initialChrom);
 
