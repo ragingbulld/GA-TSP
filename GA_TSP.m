@@ -17,6 +17,9 @@ GGAP = 0.9;       % 代沟 (generation gap)
 D = Distance(X, instance.edgeWeightType);  % 生成距离矩阵
 N = size(D, 1);   % 城市规模
 
+global GLOBAL_TSP_DISTANCE;
+GLOBAL_TSP_DISTANCE = D;
+
 %% 2. 初始化种群
 Chrom = InitPop(NIND, N);
 initialChrom = Chrom(1, :);
@@ -26,7 +29,7 @@ initialLength = PathLength(D, initialChrom);
 figure('Name', '遗传算法优化过程', 'NumberTitle', 'off');
 hPlot = plot(NaN, NaN, 'b-', 'LineWidth', 1.5);
 xlabel('代数'); ylabel('当前最优路径长度');
-title(['TSPLIB ', upper(instance.name), ' 收敛曲线']);
+title(['TSPLIB ', upper(instance.name), ' 收敛曲线 | 当前代数: 0 | 当前最优: -']);
 grid on;
 hold on;
 
@@ -69,14 +72,17 @@ while gen < MAXGEN
         bestTime = toc(total_tic);
     end
     
-    set(hPlot, 'XData', 1:gen, 'YData', trace(1:gen));
+    if mod(gen, 10) == 0 || gen == 1 || gen == MAXGEN
+        set(hPlot, 'XData', 1:gen, 'YData', trace(1:gen));
+        title(['TSPLIB ', upper(instance.name), ' 收敛曲线 | 当前代数: ', num2str(gen), ' | 当前最优: ', num2str(minObjV)]);
 
-    if gen > 1
-        ylim([minObjV * 0.95, max(trace(1:gen)) * 1.05]);
-        xlim([1, MAXGEN]);
+        if gen > 1
+            ylim([minObjV * 0.95, max(trace(1:gen)) * 1.05]);
+            xlim([1, MAXGEN]);
+        end
+
+        drawnow;
     end
-
-    drawnow;
 end
 
 totalTime = toc(total_tic);
